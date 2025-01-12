@@ -1,3 +1,4 @@
+using FluentValidation;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.OutputCaching;
@@ -7,6 +8,7 @@ using MinimalAPIsMovies.Endpoints;
 using MinimalAPIsMovies.Entities;
 using MinimalAPIsMovies.Migrations;
 using MinimalAPIsMovies.Repositories;
+using MinimalAPIsMovies.Services;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -44,10 +46,22 @@ builder.Services.AddCors(options =>
 builder.Services.AddOutputCache();
 
 builder.Services.AddScoped<IGenresRepository, GenresRepository>();
+builder.Services.AddScoped<IActorsRepository, ActorsRepository>();
+builder.Services.AddScoped<IMoviesRepository, MoviesRepository>();
+builder.Services.AddScoped<ICommentsRepository, CommentsRepositories>();
 
-builder.Services.AddAutoMapper(typeof(Program));
+//builder.Services.AddTransient<IFileStorage, AzureFileStorage>();
+builder.Services.AddTransient<IFileStorage, LocalFileStorage>();
+
+builder.Services.AddHttpContextAccessor();
+
+builder.Services.AddAutoMapper(typeof(Program));    
+
+builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
 var app = builder.Build();
+
+app.UseStaticFiles();
 
 app.UseCors();
 
@@ -60,6 +74,9 @@ app.MapScalarApiReference();
 app.MapGet("/", [EnableCors(policyName: "AllowAll")] () => "Hello World!").CacheOutput(config => config.Expire(TimeSpan.FromSeconds(15)));
 
 app.MapGroup("/genres").MapGenres();
+app.MapGroup("/actors").MapActors();
+app.MapGroup("/movies").MapMovies();
+app.MapGroup("/movie/{movieId:int}/comments").MapComments();
 
 
 app.Run();
