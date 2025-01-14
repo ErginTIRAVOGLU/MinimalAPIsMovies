@@ -14,9 +14,9 @@ namespace MinimalAPIsMovies.Endpoints
         public static RouteGroupBuilder MapGenres(this RouteGroupBuilder group)
         {
             group.MapGet("/", GetGenres).CacheOutput(config => config.Expire(TimeSpan.FromSeconds(15)).Tag("genres-get"));
-            group.MapGet("/{id:int}", GetById).AddEndpointFilter<TestFilter>();
-            group.MapPost("/", Create);
-            group.MapPut("/{id:int}", Update);
+            group.MapGet("/{id:int}", GetById);//.AddEndpointFilter<TestFilter>();
+            group.MapPost("/", Create).AddEndpointFilter<ValidationFilter<CreateGenreDto>>();
+            group.MapPut("/{id:int}", Update).AddEndpointFilter<ValidationFilter<CreateGenreDto>>();
             group.MapDelete("/{id:int}", Delete);
 
             return group;
@@ -42,15 +42,17 @@ namespace MinimalAPIsMovies.Endpoints
             return TypedResults.Ok(genreDto);
         }
 
-        static async Task<Results<Created<GenreDto>, ValidationProblem>> Create(CreateGenreDto createGenreDto, IGenresRepository repository, IOutputCacheStore outputCacheStore, IMapper mapper, IValidator<CreateGenreDto> validator)
+        static async Task<Created<GenreDto>> Create(CreateGenreDto createGenreDto, IGenresRepository repository, IOutputCacheStore outputCacheStore, IMapper mapper )
         {
+            /*
+             * Refactored GenresValidationFilter.cs
             var validationResult = await validator.ValidateAsync(createGenreDto);
 
             if (!validationResult.IsValid)
             {
                 return TypedResults.ValidationProblem(validationResult.ToDictionary());
             }
-
+            */
             var genre = mapper.Map<Genre>(createGenreDto);
             var id = await repository.Create(genre);
 
@@ -60,16 +62,17 @@ namespace MinimalAPIsMovies.Endpoints
             return TypedResults.Created($"/genres/{id}", genreDto);
         }
 
-        static async Task<Results<NoContent, NotFound, ValidationProblem>> Update(int id, CreateGenreDto createGenreDto, IGenresRepository repository, IOutputCacheStore outputCacheStore, IMapper mapper, IValidator<CreateGenreDto> validator)
+        static async Task<Results<NoContent, NotFound>> Update(int id, CreateGenreDto createGenreDto, IGenresRepository repository, IOutputCacheStore outputCacheStore, IMapper mapper)
         {
-
+            /*
+             * Refactored GenresValidationFilter.cs
             var validationResult = await validator.ValidateAsync(createGenreDto);
 
             if (!validationResult.IsValid)
             {
                 return TypedResults.ValidationProblem(validationResult.ToDictionary());
             }
-
+            */
 
             var exist = await repository.Exists(id);
 
