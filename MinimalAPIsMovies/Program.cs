@@ -59,6 +59,10 @@ builder.Services.AddAutoMapper(typeof(Program));
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
 builder.Services.AddProblemDetails();
+
+builder.Services.AddAuthentication().AddJwtBearer();
+builder.Services.AddAuthorization();    
+
 var app = builder.Build();
 
 app.UseExceptionHandler(exceptionHandlerApp => exceptionHandlerApp.Run( async context =>
@@ -89,6 +93,8 @@ app.UseStaticFiles();
 app.UseCors();
 
 app.UseOutputCache();
+
+app.UseAuthorization();
 
 app.MapOpenApi();
 
