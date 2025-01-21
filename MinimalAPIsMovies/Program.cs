@@ -1,20 +1,31 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Cors;
-using Microsoft.AspNetCore.Diagnostics; 
+using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Models;
 using MinimalAPIsMovies.Data;
 using MinimalAPIsMovies.Endpoints;
-using MinimalAPIsMovies.Entities; 
+using MinimalAPIsMovies.Entities;
 using MinimalAPIsMovies.Repositories;
 using MinimalAPIsMovies.Services;
+using MinimalAPIsMovies.Utilities;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer("name=DefaultConnection"));
 
+builder.Services.AddIdentityCore<IdentityUser>()
+    .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddDefaultTokenProviders();
 
-builder.Services.AddOpenApi();
+builder.Services.AddScoped<UserManager<IdentityUser>>();
+builder.Services.AddScoped<SignInManager<IdentityUser>>();
+
+builder.Services.AddOpenApi("v1", options => { options.AddDocumentTransformer<BearerSecuritySchemeTransformer>(); });
+
+
 
 builder.Services.AddCors(options =>
 {
@@ -54,28 +65,39 @@ builder.Services.AddTransient<IFileStorage, LocalFileStorage>();
 
 builder.Services.AddHttpContextAccessor();
 
-builder.Services.AddAutoMapper(typeof(Program));    
+builder.Services.AddAutoMapper(typeof(Program));
 
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
 builder.Services.AddProblemDetails();
 
-builder.Services.AddAuthentication().AddJwtBearer();
-builder.Services.AddAuthorization();    
+builder.Services.AddAuthentication().AddJwtBearer(options =>
+options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+{
+    ValidateIssuer = false,
+    ValidateAudience = false,
+    ValidateLifetime = true,
+    ValidateIssuerSigningKey = true,
+    ClockSkew = TimeSpan.Zero,
+    IssuerSigningKeys = KeysHandler.GetAllKeys(builder.Configuration),
+    //IssuerSigningKey = KeysHandler.GetKey(builder.Configuration).First()
+});
+
+builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
-app.UseExceptionHandler(exceptionHandlerApp => exceptionHandlerApp.Run( async context =>
+app.UseExceptionHandler(exceptionHandlerApp => exceptionHandlerApp.Run(async context =>
 {
-    var exceptionHandlerFeature=context.Features.Get<IExceptionHandlerFeature>();
+    var exceptionHandlerFeature = context.Features.Get<IExceptionHandlerFeature>();
     var exception = exceptionHandlerFeature?.Error!;
 
     var error = new Error();
     error.Date = DateTime.UtcNow;
-    error.ErrorMessage=exception.Message;
-    error.StackTrace= exception.StackTrace;
+    error.ErrorMessage = exception.Message;
+    error.StackTrace = exception.StackTrace;
 
-    var repository=context.RequestServices.GetRequiredService<IErrorsRepository>();
+    var repository = context.RequestServices.GetRequiredService<IErrorsRepository>();
     await repository.Create(error);
 
     await Results
@@ -110,7 +132,7 @@ app.MapGroup("/genres").MapGenres();
 app.MapGroup("/actors").MapActors();
 app.MapGroup("/movies").MapMovies();
 app.MapGroup("/movie/{movieId:int}/comments").MapComments();
-
+app.MapGroup("/users").MapUsers();
 
 app.Run();
 
