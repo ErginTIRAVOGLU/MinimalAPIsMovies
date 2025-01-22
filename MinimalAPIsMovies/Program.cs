@@ -62,8 +62,8 @@ builder.Services.AddScoped<IErrorsRepository, ErrorsRepository>();
 
 //builder.Services.AddTransient<IFileStorage, AzureFileStorage>();
 builder.Services.AddTransient<IFileStorage, LocalFileStorage>();
-
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddTransient<IUsersService, UsersService>();
 
 builder.Services.AddAutoMapper(typeof(Program));
 
@@ -72,16 +72,21 @@ builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 builder.Services.AddProblemDetails();
 
 builder.Services.AddAuthentication().AddJwtBearer(options =>
-options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
 {
-    ValidateIssuer = false,
-    ValidateAudience = false,
-    ValidateLifetime = true,
-    ValidateIssuerSigningKey = true,
-    ClockSkew = TimeSpan.Zero,
-    IssuerSigningKeys = KeysHandler.GetAllKeys(builder.Configuration),
-    //IssuerSigningKey = KeysHandler.GetKey(builder.Configuration).First()
-});
+    options.MapInboundClaims = false;
+
+    options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+    {
+        ValidateIssuer = false,
+        ValidateAudience = false,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ClockSkew = TimeSpan.Zero,
+        IssuerSigningKeys = KeysHandler.GetAllKeys(builder.Configuration),
+        //IssuerSigningKey = KeysHandler.GetKey(builder.Configuration).First()
+    };
+}
+);
 
 builder.Services.AddAuthorization();
 
