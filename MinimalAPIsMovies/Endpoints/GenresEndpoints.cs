@@ -16,9 +16,15 @@ namespace MinimalAPIsMovies.Endpoints
             group.MapGet("/", GetGenres).CacheOutput(config => config.Expire(TimeSpan.FromSeconds(15)).Tag("genres-get"))
                 .RequireAuthorization();
             group.MapGet("/{id:int}", GetById);//.AddEndpointFilter<TestFilter>();
-            group.MapPost("/", Create).AddEndpointFilter<ValidationFilter<CreateGenreDto>>();
-            group.MapPut("/{id:int}", Update).AddEndpointFilter<ValidationFilter<CreateGenreDto>>();
-            group.MapDelete("/{id:int}", Delete);
+            
+            group.MapPost("/", Create)
+                .AddEndpointFilter<ValidationFilter<CreateGenreDto>>()
+                .RequireAuthorization("isadmin");
+            group.MapPut("/{id:int}", Update)
+                .AddEndpointFilter<ValidationFilter<CreateGenreDto>>()
+                .RequireAuthorization("isadmin");
+            group.MapDelete("/{id:int}", Delete)
+                .RequireAuthorization("isadmin");
 
             return group;
         }

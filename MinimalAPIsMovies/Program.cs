@@ -85,10 +85,11 @@ builder.Services.AddAuthentication().AddJwtBearer(options =>
         IssuerSigningKeys = KeysHandler.GetAllKeys(builder.Configuration),
         //IssuerSigningKey = KeysHandler.GetKey(builder.Configuration).First()
     };
-}
-);
-
-builder.Services.AddAuthorization();
+}); 
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("isadmin", policy => policy.RequireClaim("isadmin"));
+});
 
 var app = builder.Build();
 

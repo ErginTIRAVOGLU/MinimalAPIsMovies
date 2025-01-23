@@ -19,14 +19,22 @@ namespace MinimalAPIsMovies.Endpoints
             group.MapGet("/", GetActors).CacheOutput(config => config.Expire(TimeSpan.FromSeconds(15)).Tag("actors-get"));
             group.MapGet("getByName/{name}", GetByName);
             group.MapGet("/{id:int}", GetById);
-            group.MapPost("/", Create).DisableAntiforgery().AddEndpointFilter<ValidationFilter<CreateActorDto>>();
-            group.MapPut("/{id:int}", Update).DisableAntiforgery().AddEndpointFilter<ValidationFilter<CreateActorDto>>();
-            group.MapDelete("/{id:int}", Delete);
+
+            group.MapPost("/", Create)
+                .DisableAntiforgery()
+                .AddEndpointFilter<ValidationFilter<CreateActorDto>>()
+                .RequireAuthorization("isadmin");
+            group.MapPut("/{id:int}", Update)
+                .DisableAntiforgery()
+                .AddEndpointFilter<ValidationFilter<CreateActorDto>>()
+                .RequireAuthorization("isadmin");
+            group.MapDelete("/{id:int}", Delete)
+                .RequireAuthorization("isadmin"); ;
             return group;
         }
 
-        static async Task<Created<ActorDto>> Create([FromForm] CreateActorDto createActorDto, IActorsRepository repository, IOutputCacheStore outputCacheStore, IMapper mapper, IFileStorage fileStorage   )
-        { 
+        static async Task<Created<ActorDto>> Create([FromForm] CreateActorDto createActorDto, IActorsRepository repository, IOutputCacheStore outputCacheStore, IMapper mapper, IFileStorage fileStorage)
+        {
             var actor = mapper.Map<Actor>(createActorDto);
 
             if (createActorDto.Picture is not null)
