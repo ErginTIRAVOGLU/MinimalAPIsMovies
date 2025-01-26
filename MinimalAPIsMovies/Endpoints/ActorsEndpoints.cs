@@ -3,6 +3,8 @@ using FluentValidation;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
+using Microsoft.OpenApi.Any;
+using Microsoft.OpenApi.Models;
 using MinimalAPIsMovies.DTOs;
 using MinimalAPIsMovies.Entities;
 using MinimalAPIsMovies.Filters;
@@ -16,7 +18,11 @@ namespace MinimalAPIsMovies.Endpoints
         private readonly static string container = "actors";
         public static RouteGroupBuilder MapActors(this RouteGroupBuilder group)
         {
-            group.MapGet("/", GetActors).CacheOutput(config => config.Expire(TimeSpan.FromSeconds(15)).Tag("actors-get"));
+            group.MapGet("/", GetActors)
+                .CacheOutput(config => config.Expire(TimeSpan.FromSeconds(15))
+                .Tag("actors-get"))
+                 .WithDescription("Retrieves a paginated list of actors from the database.");
+               
             group.MapGet("getByName/{name}", GetByName);
             group.MapGet("/{id:int}", GetById);
 
@@ -49,14 +55,15 @@ namespace MinimalAPIsMovies.Endpoints
             return TypedResults.Created($"/actors/{id}", actorDto);
         }
 
-        static async Task<Ok<List<ActorDto>>> GetActors(IActorsRepository repository, IMapper mapper, int page = 1, int recordsPerPage = 10)
+        static async Task<Ok<List<ActorDto>>> GetActors(IActorsRepository repository, IMapper mapper, PaginationDto pagination)
         {
+            /*
             var pagination = new PaginationDto
             {
                 Page = page,
                 RecordsPerPage = recordsPerPage
             };
-
+            */
             var actors = await repository.GetAll(pagination);
             var actorsDto = mapper.Map<List<ActorDto>>(actors);
             return TypedResults.Ok(actorsDto);

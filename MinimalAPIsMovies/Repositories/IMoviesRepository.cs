@@ -13,5 +13,6 @@ namespace MinimalAPIsMovies.Repositories
         Task<Movie?> GetById(int id);
         Task<List<Movie>> GetMovies(PaginationDto pagination);
         Task Update(Movie movie);
+        Task<List<Movie>> Filter(MoviesFilterDto moviesFilterDto);
     }
 }

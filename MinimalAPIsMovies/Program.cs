@@ -2,6 +2,7 @@ using FluentValidation;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using MinimalAPIsMovies.Data;
@@ -85,7 +86,7 @@ builder.Services.AddAuthentication().AddJwtBearer(options =>
         IssuerSigningKeys = KeysHandler.GetAllKeys(builder.Configuration),
         //IssuerSigningKey = KeysHandler.GetKey(builder.Configuration).First()
     };
-}); 
+});
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("isadmin", policy => policy.RequireClaim("isadmin"));
@@ -134,6 +135,14 @@ app.MapGet("/error", () =>
 {
     throw new InvalidOperationException("example error");
 });
+
+app.MapPost("/modelbinding", ([FromQuery(Name = "name2")] string? name) =>
+{
+    if (name is null) name = "Empty";
+
+    return TypedResults.Ok(name);
+});
+
 app.MapGroup("/genres").MapGenres();
 app.MapGroup("/actors").MapActors();
 app.MapGroup("/movies").MapMovies();

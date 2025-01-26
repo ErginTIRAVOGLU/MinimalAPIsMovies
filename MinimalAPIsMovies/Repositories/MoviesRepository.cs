@@ -85,5 +85,39 @@ namespace MinimalAPIsMovies.Repositories
             await context.SaveChangesAsync();
 
         }
+
+        public async Task<List<Movie>> Filter(MoviesFilterDto moviesFilterDto)
+        {
+             var moviesQueryable = context.Movies.AsQueryable();
+
+            if(!string.IsNullOrEmpty(moviesFilterDto.Title))
+            {
+                moviesQueryable = moviesQueryable.Where(m => m.Title.Contains(moviesFilterDto.Title));
+            }
+
+            if (moviesFilterDto.InTheaters)
+            {
+                moviesQueryable = moviesQueryable.Where(m => m.InTheaters == moviesFilterDto.InTheaters);
+            }
+
+            if(moviesFilterDto.FutureReleasees)
+            {
+                var today = DateTime.Today;
+                moviesQueryable = moviesQueryable.Where(m => m.ReleaseDate > today);
+            }
+
+            if(moviesFilterDto.GenreId != 0)
+            {
+                moviesQueryable = moviesQueryable
+                    .Where(m => m.GenresMovies.Select(gm => gm.GenreId)
+                    .Contains(moviesFilterDto.GenreId));
+            }
+
+            await httpContextAccessor.HttpContext!
+                .InsertPaginationParameterInResponseHeader(moviesQueryable);
+
+            var movies= await moviesQueryable.Paginate(moviesFilterDto.PaginationDto).ToListAsync();
+            return movies;
+        }
     }
 }

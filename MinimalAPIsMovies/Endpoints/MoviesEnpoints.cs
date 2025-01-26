@@ -17,15 +17,21 @@ namespace MinimalAPIsMovies.Endpoints
         public static RouteGroupBuilder MapMovies(this RouteGroupBuilder group)
         {
             group.MapGet("/", GetMovies).CacheOutput(c => c.Expire(TimeSpan.FromSeconds(15)).Tag("movies-get"));
+
             group.MapGet("/{id}", GetById);
+
+            group.MapPost("/filter", FilterMovies);
+
             group.MapPost("/", Create)
                 .DisableAntiforgery()
                 .AddEndpointFilter<ValidationFilter<CreateMovieDto>>()
                 .RequireAuthorization("isadmin");
+
             group.MapPut("/{ id:int}", Update)
                 .DisableAntiforgery()
                 .AddEndpointFilter<ValidationFilter<CreateMovieDto>>()
                 .RequireAuthorization("isadmin");
+
             group.MapDelete("/{id:int}", Delete);
             group.MapPost("/{id:int}/assignGenres", AssignGenres)
                 .RequireAuthorization("isadmin");
@@ -162,6 +168,13 @@ namespace MinimalAPIsMovies.Endpoints
             var actors = mapper.Map<List<ActorMovie>>(actorsDto);
             await moviesRepository.Assign(id, actors);
             return TypedResults.NoContent();
+        }
+
+        static async Task<Ok<List<MovieDto>>> FilterMovies(MoviesFilterDto moviesFilterDto, IMoviesRepository moviesRepository, IMapper mapper)
+        {
+            var movies = await moviesRepository.Filter(moviesFilterDto);
+            var moviesDto = mapper.Map<List<MovieDto>>(movies);
+            return TypedResults.Ok(moviesDto);
         }
     }
 }
