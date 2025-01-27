@@ -10,8 +10,8 @@ namespace MinimalAPIsMovies.Services
                 return Task.CompletedTask;
             }
 
-            var fileName = Path.GetFileName(route);
-            var fileDirectory = Path.Combine(env.WebRootPath, container, fileName);
+            var fileName = System.IO.Path.GetFileName(route);
+            var fileDirectory = System.IO.Path.Combine(env.WebRootPath, container, fileName);
 
             if (File.Exists(fileDirectory))
             {
@@ -23,16 +23,16 @@ namespace MinimalAPIsMovies.Services
 
         public async Task<string> Store(string container, IFormFile file)
         {
-            var extension = Path.GetExtension(file.FileName);
+            var extension = System.IO.Path.GetExtension(file.FileName);
             var fileName = $"{Guid.NewGuid()}{extension}";
-            string folder = Path.Combine(env.WebRootPath, container);
+            string folder = System.IO.Path.Combine(env.WebRootPath, container);
 
             if (!Directory.Exists(folder))
             {
                 Directory.CreateDirectory(folder);
             }
 
-            string route = Path.Combine(folder, fileName);
+            string route = System.IO.Path.Combine(folder, fileName);
             using (var ms = new MemoryStream())
             {
                 await file.CopyToAsync(ms);
@@ -44,7 +44,7 @@ namespace MinimalAPIsMovies.Services
             var host = httpContextAccessor.HttpContext!.Request.Host;
 
             var url = $"{schema}://{host}";
-            var urlFile = Path.Combine(url, container, fileName).Replace("\\","/");
+            var urlFile = System.IO.Path.Combine(url, container, fileName).Replace("\\","/");
 
             return urlFile;
         }

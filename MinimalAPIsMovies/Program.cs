@@ -8,6 +8,7 @@ using Microsoft.OpenApi.Models;
 using MinimalAPIsMovies.Data;
 using MinimalAPIsMovies.Endpoints;
 using MinimalAPIsMovies.Entities;
+using MinimalAPIsMovies.GraphQL;
 using MinimalAPIsMovies.Repositories;
 using MinimalAPIsMovies.Services;
 using MinimalAPIsMovies.Utilities;
@@ -16,6 +17,13 @@ using Scalar.AspNetCore;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer("name=DefaultConnection"));
+
+builder.Services.AddGraphQLServer()
+     .AddQueryType<Query>()
+     .AddAuthorization()
+     .AddProjections()
+     .AddFiltering()
+     .AddSorting();
 
 builder.Services.AddIdentityCore<IdentityUser>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
@@ -54,7 +62,12 @@ builder.Services.AddCors(options =>
 });
 
 builder.Services.AddOutputCache();
-
+/*
+builder.Services.AddStackExchangeRedisOutputCache(options =>
+{
+    options.Configuration = builder.Configuration.GetConnectionString("redis"); 
+});
+*/
 builder.Services.AddScoped<IGenresRepository, GenresRepository>();
 builder.Services.AddScoped<IActorsRepository, ActorsRepository>();
 builder.Services.AddScoped<IMoviesRepository, MoviesRepository>();
@@ -99,7 +112,7 @@ app.UseExceptionHandler(exceptionHandlerApp => exceptionHandlerApp.Run(async con
     var exceptionHandlerFeature = context.Features.Get<IExceptionHandlerFeature>();
     var exception = exceptionHandlerFeature?.Error!;
 
-    var error = new Error();
+    var error = new MinimalAPIsMovies.Entities.Error();
     error.Date = DateTime.UtcNow;
     error.ErrorMessage = exception.Message;
     error.StackTrace = exception.StackTrace;
@@ -121,10 +134,11 @@ app.UseStaticFiles();
 
 app.UseCors();
 
-app.UseOutputCache();
+
 
 app.UseAuthorization();
-
+app.UseOutputCache();
+app.MapGraphQL();
 app.MapOpenApi();
 
 app.MapScalarApiReference();

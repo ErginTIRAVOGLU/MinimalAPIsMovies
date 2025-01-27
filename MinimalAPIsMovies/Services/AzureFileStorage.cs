@@ -23,7 +23,7 @@ namespace MinimalAPIsMovies.Services
             var client = new BlobContainerClient(connectionString, container);
             await client.CreateIfNotExistsAsync();
 
-            var fileName = Path.GetFileName(route);
+            var fileName = System.IO.Path.GetFileName(route);
             var blob = client.GetBlobClient(fileName);
             await blob.DeleteIfExistsAsync();
         }
@@ -34,7 +34,7 @@ namespace MinimalAPIsMovies.Services
             await client.CreateIfNotExistsAsync();
             client.SetAccessPolicy(PublicAccessType.Blob);
 
-            var extension = Path.GetExtension(file.FileName);
+            var extension = System.IO.Path.GetExtension(file.FileName);
             var fileName = $"{Guid.NewGuid()}{extension}";
             var blob = client.GetBlobClient(fileName);
             

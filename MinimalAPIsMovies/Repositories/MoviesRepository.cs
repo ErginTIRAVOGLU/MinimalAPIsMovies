@@ -3,10 +3,11 @@ using Microsoft.EntityFrameworkCore;
 using MinimalAPIsMovies.Data;
 using MinimalAPIsMovies.DTOs;
 using MinimalAPIsMovies.Entities;
+using System.Linq.Dynamic.Core;
 
 namespace MinimalAPIsMovies.Repositories
 {
-    public class MoviesRepository(IHttpContextAccessor httpContextAccessor, ApplicationDbContext context, IMapper mapper) : IMoviesRepository
+    public class MoviesRepository(IHttpContextAccessor httpContextAccessor, ApplicationDbContext context, IMapper mapper, ILogger<MoviesRepository> logger) : IMoviesRepository
     {
         public async Task<List<Movie>> GetMovies(PaginationDto pagination)
         {
@@ -21,7 +22,7 @@ namespace MinimalAPIsMovies.Repositories
                 .Include(m => m.Comments)
                 .Include(m => m.GenresMovies)
                     .ThenInclude(gm => gm.Genre)
-                .Include(m => m.ActorsMovies.OrderBy(am=>am.Order))
+                .Include(m => m.ActorsMovies.OrderBy(am => am.Order))
                     .ThenInclude(am => am.Actor)
                 .AsNoTracking().FirstOrDefaultAsync(m => m.Id == id);
         }
@@ -88,9 +89,9 @@ namespace MinimalAPIsMovies.Repositories
 
         public async Task<List<Movie>> Filter(MoviesFilterDto moviesFilterDto)
         {
-             var moviesQueryable = context.Movies.AsQueryable();
+            var moviesQueryable = context.Movies.AsQueryable();
 
-            if(!string.IsNullOrEmpty(moviesFilterDto.Title))
+            if (!string.IsNullOrEmpty(moviesFilterDto.Title))
             {
                 moviesQueryable = moviesQueryable.Where(m => m.Title.Contains(moviesFilterDto.Title));
             }
@@ -100,23 +101,37 @@ namespace MinimalAPIsMovies.Repositories
                 moviesQueryable = moviesQueryable.Where(m => m.InTheaters == moviesFilterDto.InTheaters);
             }
 
-            if(moviesFilterDto.FutureReleasees)
+            if (moviesFilterDto.FutureReleasees)
             {
                 var today = DateTime.Today;
                 moviesQueryable = moviesQueryable.Where(m => m.ReleaseDate > today);
             }
 
-            if(moviesFilterDto.GenreId != 0)
+            if (moviesFilterDto.GenreId != 0)
             {
                 moviesQueryable = moviesQueryable
                     .Where(m => m.GenresMovies.Select(gm => gm.GenreId)
                     .Contains(moviesFilterDto.GenreId));
             }
 
+            if (!string.IsNullOrEmpty(moviesFilterDto.OrderByField))
+            {
+                var orderKind = moviesFilterDto.OrderByAscending ? "ascending" : "descending";
+
+                try
+                {
+                    moviesQueryable = moviesQueryable.OrderBy($"{moviesFilterDto.OrderByField} {orderKind}");
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex.Message, ex);
+                }
+            }
+
             await httpContextAccessor.HttpContext!
                 .InsertPaginationParameterInResponseHeader(moviesQueryable);
 
-            var movies= await moviesQueryable.Paginate(moviesFilterDto.PaginationDto).ToListAsync();
+            var movies = await moviesQueryable.Paginate(moviesFilterDto.PaginationDto).ToListAsync();
             return movies;
         }
     }

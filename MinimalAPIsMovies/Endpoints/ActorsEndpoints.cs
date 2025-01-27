@@ -19,10 +19,12 @@ namespace MinimalAPIsMovies.Endpoints
         public static RouteGroupBuilder MapActors(this RouteGroupBuilder group)
         {
             group.MapGet("/", GetActors)
-                .CacheOutput(config => config.Expire(TimeSpan.FromSeconds(15))
-                .Tag("actors-get"))
+                .CacheOutput(config =>
+                {
+                    config.Expire(TimeSpan.FromSeconds(15)).Tag("actors-get");
+                })
                  .WithDescription("Retrieves a paginated list of actors from the database.");
-               
+
             group.MapGet("getByName/{name}", GetByName);
             group.MapGet("/{id:int}", GetById);
 

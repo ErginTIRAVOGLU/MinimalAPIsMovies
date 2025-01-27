@@ -4,6 +4,6 @@ namespace MinimalAPIsMovies.Repositories
 {
     public interface IErrorsRepository
     {
-        Task Create(Error error);
+        Task Create(Entities.Error error);
     }
 }

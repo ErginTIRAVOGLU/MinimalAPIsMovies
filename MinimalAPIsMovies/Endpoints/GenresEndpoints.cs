@@ -37,7 +37,7 @@ namespace MinimalAPIsMovies.Endpoints
         {
             var type = typeof(GenresEndpoints);
             var logger = loggerFactory.CreateLogger(type.FullName!);
-
+            /*
             logger.LogTrace("This is a trace log"); 
             logger.LogDebug("This is a debug log"); 
             logger.LogInformation("This is a info log"); 
@@ -46,7 +46,7 @@ namespace MinimalAPIsMovies.Endpoints
             logger.LogCritical("This is a critical log"); 
 
             logger.LogInformation("Getting all genres");
-
+            */
             var genres = await repository.GetAll();
             var genresDto = mapper.Map<List<GenreDto>>(genres);
             return TypedResults.Ok(genresDto);
