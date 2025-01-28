@@ -127,7 +127,13 @@ namespace MinimalAPIsMovies.Endpoints
 
             claims.AddRange(claimsFromDB);
 
-            var key = KeysHandler.GetKey(configuration).First();
+            var keys = KeysHandler.GetKey(configuration);
+            if (!keys.Any())
+            {
+                throw new InvalidOperationException("No keys found in the configuration.");
+            }
+            var key = keys.First();
+
             var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var expiration = DateTime.UtcNow.AddYears(1);

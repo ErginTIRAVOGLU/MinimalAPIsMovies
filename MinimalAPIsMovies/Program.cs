@@ -20,6 +20,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlSer
 
 builder.Services.AddGraphQLServer()
      .AddQueryType<Query>()
+     .AddMutationType<Mutation>()
      .AddAuthorization()
      .AddProjections()
      .AddFiltering()
